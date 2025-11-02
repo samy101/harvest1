@@ -1,0 +1,39 @@
+name: Deploy HugoBlox to GitHub Pages
+on:
+  push:
+    branches: [ main ]   # or 'master'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency: { group: "pages", cancel-in-progress: false }
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }   # pull HugoBlox theme modules
+      - name: Install Hugo (extended)
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: '0.128.2'         # any recent EXTENDED version
+          extended: true
+      - name: Build
+        run: hugo --minify
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
